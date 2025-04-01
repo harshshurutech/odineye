@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>odineye</title>
+    <link rel="shortcut icon" href="./favicon.svg" sizes="any" type="image/svg+xml">
+    <style>
+        :root {
+            --background: #1a1a1a;
+            --foreground: #ffffff;
+            --card: #2a2a2a;
+            --card-foreground: #d0d0d0;
+            --border: #3a3a3a;
+            --primary: #ffffff;
+            --primary-foreground: #000000;
+            --secondary: #3a3a3a;
+            --secondary-foreground: #d0d0d0;
+            --muted: #4a4a4a;
+            --muted-foreground: #a0a0a0;
+            --destructive: #e63946;
+            /* Red for errors */
+            --success: #2ecc71;
+            /* Green for success */
+            --radius: 0.5rem;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            color: var(--foreground);
+            background-color: var(--background);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .subtitle {
+            font-size: 0.9rem;
+            color: var(--muted-foreground);
+            margin-top: 0.25rem;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 1rem;
+            flex: 1;
+        }
+
+        .card {
+            background-color: var(--card);
+            border-radius: var(--radius);
+            padding: 1rem;
+            border: 1px solid var(--border);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .status-badge.idle {
+            background-color: var(--muted);
+            color: var(--muted-foreground);
+        }
+
+        .status-badge.loading {
+            background-color: var(--muted);
+            color: var(--muted-foreground);
+        }
+
+        .status-badge.success {
+            background-color: rgba(46, 204, 113, 0.15);
+            color: var(--success);
+        }
+
+        .status-badge.error {
+            background-color: rgba(230, 57, 70, 0.15);
+            color: var(--destructive);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn {
+            padding: 0.5rem 0.75rem;
+            border-radius: var(--radius);
+            font-weight: 500;
+            font-size: 0.875rem;
+            cursor: pointer;
+            border: 1px solid var(--primary);
+            background-color: transparent;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .btn:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-icon {
+            width: 16px;
+            height: 16px;
+        }
+
+        .section-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+        }
+
+        .accordion {
+            margin-bottom: 0.5rem;
+        }
+
+        .accordion-header {
+            background-color: var(--secondary);
+            padding: 0.5rem;
+            border-radius: var(--radius);
+            cursor: pointer;
+            color: var(--secondary-foreground);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .accordion-toggle {
+            font-size: 0.75rem;
+            color: var(--muted-foreground);
+        }
+
+        .accordion-content {
+            display: none;
+            padding: 0.5rem;
+            background-color: rgba(230, 57, 70, 0.05);
+            border-radius: var(--radius);
+            border-left: 2px solid var(--destructive);
+        }
+
+        .accordion-content.active {
+            display: block;
+        }
+
+        .no-warnings {
+            padding: 0.5rem;
+            background-color: rgba(46, 204, 113, 0.15);
+            border-radius: var(--radius);
+            color: var(--success);
+            border-left: 2px solid var(--success);
+        }
+
+        .timestamp {
+            font-size: 0.75rem;
+            color: var(--muted-foreground);
+            text-align: right;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="logo">OdinEye</div>
+        <p class="subtitle">Interview Integrity Monitor</p>
+    </header>
+
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <div id="status-badge" class="status-badge idle">
+                    <span id="status-text">idle</span>
+                </div>
+                <div class="action-buttons">
+                    <button id="run-scan-btn" class="btn">
+                        <svg class="btn-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                        </svg>
+                        <span>run scan</span>
+                    </button>
+                    <button id="refresh-btn" class="btn">
+                        <svg class="btn-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path>
+                            <path d="M21 3v5h-5"></path>
+                            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path>
+                            <path d="M3 21v-5h5"></path>
+                        </svg>
+                        <span>refresh</span>
+                    </button>
+                </div>
+            </div>
+
+            <div id="warnings-container">
+                <h3 class="section-title">Detected issues</h3>
+                <div id="warnings-wrapper">
+                    <div class="no-warnings">no scans have been run yet.</div>
+                </div>
+            </div>
+
+            <div class="timestamp" id="timestamp">last updated: --</div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const getElements = () => ({
+                runScanBtn: document.getElementById('run-scan-btn'),
+                refreshBtn: document.getElementById('refresh-btn'),
+                statusBadge: document.getElementById('status-badge'),
+                statusText: document.getElementById('status-text'),
+                warningsWrapper: document.getElementById('warnings-wrapper'),
+                timestamp: document.getElementById('timestamp')
+            });
+
+            const initialState = {
+                hasScansRun: false,
+                isRunning: false,
+                isRefreshing: false,
+                data: null
+            };
+
+            let state = initialState;
+
+            const updateState = newState => {
+                state = { ...state, ...newState };
+                return state;
+            };
+
+            const fetchStatusData = () =>
+                fetch('/api/status')
+                    .then(response => response.json());
+
+            const runScans = () =>
+                fetch('/api/status', { method: 'POST' })
+                    .then(response => response.json());
+
+            const setButtonsState = (elements, isDisabled) => {
+                elements.runScanBtn.disabled = isDisabled;
+                elements.refreshBtn.disabled = isDisabled;
+            };
+
+            const setLoadingState = (elements, message) => {
+                elements.statusBadge.className = 'status-badge loading';
+                elements.statusText.textContent = message;
+                elements.warningsWrapper.innerHTML = '';
+            };
+
+            const renderTimestamp = (element, timestamp) => {
+                const date = new Date(timestamp * 1000);
+                element.textContent = `Last updated: ${date.toLocaleString()}`;
+            };
+
+            const categorizeWarnings = warnings => {
+                const categories = {
+                    "Display Issues": [],
+                    "Screen Sharing": [],
+                    "Network Issues": []
+                };
+
+                return warnings.reduce((acc, warning) => {
+                    if (warning.includes("displays detected")) {
+                        return { ...acc, "Display Issues": [...acc["Display Issues"], warning] };
+                    } else if (warning.includes("Screen sharing")) {
+                        return { ...acc, "Screen Sharing": [...acc["Screen Sharing"], warning] };
+                    } else if (warning.includes("network connection")) {
+                        return { ...acc, "Network Issues": [...acc["Network Issues"], warning] };
+                    }
+                    return acc;
+                }, categories);
+            };
+
+            const createAccordion = (category, warnings) => {
+                if (warnings.length === 0) return '';
+
+                return `
+                    <div class="accordion">
+                        <div class="accordion-header">
+                            ${category} (${warnings.length})
+                            <span class="accordion-toggle">hide</span>
+                        </div>
+                        <div class="accordion-content active">
+                            ${warnings.map(w => `<div>${w}</div>`).join('')}
+                        </div>
+                    </div>
+                `;
+            };
+
+            const renderWarnings = (element, categories) => {
+                element.innerHTML = Object.entries(categories)
+                    .map(([category, warnings]) => createAccordion(category, warnings))
+                    .join('');
+            };
+
+            const renderStatus = (elements, data, hasScansRun) => {
+                if (!hasScansRun && data.warnings.length === 0 && data.status === "Idle") {
+                    elements.statusBadge.className = 'status-badge idle';
+                    elements.statusText.textContent = 'Idle';
+                    elements.warningsWrapper.innerHTML = '<div class="no-warnings">No scans have been run yet.</div>';
+                } else if (data.warnings.length === 0) {
+                    elements.statusBadge.className = 'status-badge success';
+                    elements.statusText.textContent = 'All checks passed';
+                    elements.warningsWrapper.innerHTML = '<div class="no-warnings">No security issues detected.</div>';
+                } else {
+                    elements.statusBadge.className = 'status-badge error';
+                    elements.statusText.textContent = `${data.warnings.length} issue${data.warnings.length > 1 ? 's' : ''} detected`;
+
+                    const categories = categorizeWarnings(data.warnings);
+                    renderWarnings(elements.warningsWrapper, categories);
+                }
+
+                renderTimestamp(elements.timestamp, data.timestamp);
+            };
+
+            const handleError = elements => error => {
+                console.error('Error:', error);
+                elements.statusBadge.className = 'status-badge error';
+                elements.statusText.textContent = 'Connection error';
+                elements.warningsWrapper.innerHTML = '';
+            };
+
+            const updateUI = elements => data => {
+                updateState({ data, hasScansRun: true });
+                renderStatus(elements, data, state.hasScansRun);
+            };
+
+            const handleFetchStatus = elements => () => {
+                return fetchStatusData()
+                    .then(data => {
+                        if (data.status !== "Running checks...") {
+                            updateUI(elements)(data);
+                        }
+                        return data;
+                    })
+                    .catch(handleError(elements));
+            };
+
+            const handleRunScan = elements => () => {
+                setButtonsState(elements, true);
+                setLoadingState(elements, 'Checking...');
+                updateState({ isRunning: true });
+
+                return runScans()
+                    .then(updateUI(elements))
+                    .catch(handleError(elements))
+                    .finally(() => {
+                        setButtonsState(elements, false);
+                        updateState({ isRunning: false });
+                    });
+            };
+
+            const handleRefresh = elements => () => {
+                setButtonsState(elements, true);
+                setLoadingState(elements, 'Refreshing...');
+                updateState({ isRefreshing: true });
+
+                return handleFetchStatus(elements)()
+                    .finally(() => {
+                        setButtonsState(elements, false);
+                        updateState({ isRefreshing: false });
+                    });
+            };
+
+            const setupAccordionEvents = elements => {
+                elements.warningsWrapper.addEventListener('click', e => {
+                    const header = e.target.closest('.accordion-header');
+                    if (header) {
+                        const content = header.nextElementSibling;
+                        const toggle = header.querySelector('.accordion-toggle');
+                        const isActive = !content.classList.contains('active');
+
+                        content.classList.toggle('active');
+                        toggle.textContent = isActive ? 'hide' : 'show';
+                    }
+                });
+            };
+
+            const initApp = () => {
+                const elements = getElements();
+
+                elements.runScanBtn.addEventListener('click', handleRunScan(elements));
+                elements.refreshBtn.addEventListener('click', handleRefresh(elements));
+                setupAccordionEvents(elements);
+
+                handleFetchStatus(elements)();
+            };
+
+            initApp();
+        });
+    </script>
+</body>
+
+</html>
